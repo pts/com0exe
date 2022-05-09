@@ -1,3 +1,11 @@
 *~
 /com0exe
 /test/tmp*.exe
+/com0exe.com
+/com0exe.dos.exe
+/com0exe.linux.i386
+/com0exe.static
+/com0exe.tcc
+/com0exe.win32.exe
+/com0exe.win32w.exe
+/com0exe.o
