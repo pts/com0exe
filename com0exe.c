@@ -9,7 +9,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,10 +18,12 @@
 #ifdef MSDOS
 #define IS_LE 1
 #define SEP2 '\\'
+#define strerror(errno) "I/O error"
 #else
 #ifdef WIN32
 #define IS_LE 1
 #define SEP2 '\\'
+#define strerror(errno) "I/O error"
 #else
 #define SEP2 '/'
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -40,15 +41,44 @@
 #define O_BINARY 0
 #endif
 
+#ifndef STDERR_FILENO
+#define STDERR_FILENO 2
+#endif
+
+/* Writes unsigned decimal to filehandle. */
+static int write_u10(int fd, unsigned u) {
+  char tmp[sizeof(u) * 3], *p = tmp, *q = tmp, *r, c;
+  do {
+    *p++ = '0' + u % 10;
+  } while ((u /= 10) != 0);
+  r = p--;
+  while (q < p) {
+    c = *q;
+    *q++ = *p;
+    *p-- = c;
+  }
+  return write(fd, tmp, r - tmp);
+}
+
+static ssize_t write_str3(int fd, const char *str1, const char *str2, const char *str3) {
+  ssize_t got = write(fd, str1, strlen(str1));
+  if (got < 0) return -1;
+  got = write(fd, str2, strlen(str2));
+  if (got < 0) return -1;
+  got = write(fd, str3, strlen(str3));
+  if (got < 0) return -1;
+  return 1;
+}
+
 static void change_ext(char *fn, const char *ext) {
   char *p0 = fn + strlen(fn), *p = p0;
   for (; p != fn && p[-1] != '.' && p[-1] != '/' && p[-1] != SEP2; --p) {}
   if (p == fn || p[-1] != '.') {
-    fprintf(stderr, "fatal: extension not found in filename: %s\n", fn);
+    write_str3(STDERR_FILENO, "fatal: extension not found in filename: ", fn, "\n");
     exit(2);
   }
   if ((size_t)(p0 - p) > strlen(ext)) {
-    fprintf(stderr, "fatal: extension too short in filename: %s\n", fn);
+    write_str3(STDERR_FILENO, "fatal: extension too short in filename: ", fn, "\n");
     exit(2);
   }
   strcpy(p, ext);
@@ -115,12 +145,12 @@ int main(int argc, char **argv) {
 
   (void)argc;
   if (!argv[0] || !argv[1] || strcmp(argv[1], "--help") == 0) {
-    fprintf(stderr, "com0exe: DOS .com program to .exe converter\n"
-                    "This is free software, GNU GPL >=2.0. There is NO WARRANTY. Use at your risk.\n"
-                    "Usage: %s [<flag> ...] <dos-com-file> [<output-exe-file>]\n"
-                    "Flags:\n"
-                    "--noret: Assumes that .com program doesn't use ret to exit.\n",
-                    argv[0]);
+    write_str3(STDERR_FILENO, "com0exe: DOS .com program to .exe converter\n"
+               "This is free software, GNU GPL >=2.0. There is NO WARRANTY. Use at your risk.\n"
+               "Usage: ", argv[0] ? "com0exe" : argv[0],
+               " [<flag> ...] <dos-com-file> [<output-exe-file>]\n"
+               "Flags:\n"
+               "--noret: Assumes that .com program doesn't use ret to exit.\n");
     exit(argv[0] && argv[1] ? 0 : 1);
   }
   ++argv;
@@ -133,13 +163,13 @@ int main(int argc, char **argv) {
     } else if (0 == strcmp(arg, "--noret")) {
       noret = 1;
     } else {
-      fprintf(stderr, "fatal: unknown command-line flag: %s\n", arg);
+      write_str3(STDERR_FILENO, "fatal: unknown command-line flag: ", arg, "\n");
       exit(1);
     }
   }
   /* Now: argv contains remaining (non-flag) arguments. */
   if (!argv[0]) {
-    fprintf(stderr, "fatal: missing <dos-com-file> input filename\n");
+    write_str3(STDERR_FILENO, "fatal: missing <dos-com-file> input filename\n", "", "");
     exit(1);
   }
   infn = *argv++;
@@ -147,12 +177,14 @@ int main(int argc, char **argv) {
 
   { char *p = buf;
     if ((infd = open(infn, O_RDONLY)) < 0) {
-      fprintf(stderr, "fatal: error opening input file: %s: %s\n", infn, strerror(errno));
+      write_str3(STDERR_FILENO, "fatal: error opening input file: ", infn, ": ");
+      write_str3(STDERR_FILENO, strerror(errno), "\n", "");
       exit(2);
     }
     p = buf;
     if ((got = read(infd, buf, 16384)) < 0) { read_error:
-      fprintf(stderr, "fatal: error reading input file: %s: %s\n", infn, strerror(errno));
+      write_str3(STDERR_FILENO, "fatal: error reading input file: ", infn, ": ");
+      write_str3(STDERR_FILENO, strerror(errno), "\n", "");
       exit(2);
     }
     p += got;
@@ -168,7 +200,9 @@ int main(int argc, char **argv) {
           if ((got = read(infd, p, need)) < 0) goto read_error;
           p += got;
           if (got == need) {
-            fprintf(stderr, "fatal: .com program too long: %s: %u\n", infn, (unsigned)(p - buf));
+            write_str3(STDERR_FILENO, "fatal: .com program too long: ", infn, ": ");
+            write_u10(STDERR_FILENO, (unsigned)(p - buf));
+            (void)!write(STDERR_FILENO, "\n", 1);
             exit(2);
           }
         }
@@ -208,7 +242,7 @@ int main(int argc, char **argv) {
     memcpy((char*)exehdr + 24, output_signature, sizeof(output_signature));
   }
   if (entry >= 0xff00) {
-    fprintf(stderr, "fatal: .exe program entry point would be to high: %s\n", infn);
+    write_str3(STDERR_FILENO, "fatal: .exe program entry point would be to high: ", infn, "\n");
     exit(2);
   }
 
@@ -219,11 +253,11 @@ int main(int argc, char **argv) {
     const uint16_t imagex_size_nblocks = (imagex_size >> 9) + (imagex_size_lastsize ? 1 : 0);  /* No uint16_t overflow. */
     const uint16_t imagea_para = (imagex_size_nblocks << 5) - exehdr_para;
     if ((exehdr_size & ~15) + com_size > MAX_DOS_COM_SIZE) {
-      fprintf(stderr, "fatal: .exe program would be too long: %s\n", infn);
+      write_str3(STDERR_FILENO, "fatal: .exe program would be too long: ", infn, "\n");
       exit(2);
     }
     if (imagea_para > 0xff0) {
-      fprintf(stderr, "fatal: .exe program would be too long (para alloc count): %s\n", infn);
+      write_str3(STDERR_FILENO, "fatal: .exe program would be too long (para alloc count): ", infn, "\n");
       exit(2);
     }
     *eh++ /* [EXE_SIGNATURE] */ = 'M' | 'Z' << 8;
@@ -257,11 +291,13 @@ int main(int argc, char **argv) {
   { const char *p;
     uint16_t remaining;
     if ((outfd = open(outfn, O_WRONLY | O_CREAT | O_TRUNC, 0644)) < 0) {
-      fprintf(stderr, "fatal: error opening output file: %s: %s\n", outfn, strerror(errno));
+      write_str3(STDERR_FILENO, "fatal: error opening output file: ", outfn, ": ");
+      write_str3(STDERR_FILENO, strerror(errno), "\n", "");
       exit(2);
     }
     if ((int)write(outfd, exehdr, exehdr_size) != (int)exehdr_size) { write_error:
-      fprintf(stderr, "fatal: error writing output file: %s: %s\n", outfn, strerror(errno));
+      write_str3(STDERR_FILENO, "fatal: error writing output file: ", outfn, ": ");
+      write_str3(STDERR_FILENO, strerror(errno), "\n", "");
       exit(2);
     }
     p = com_start; remaining = com_size;
