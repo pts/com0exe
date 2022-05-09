@@ -32,3 +32,9 @@ com0exe.tcc: $(SRCDEPS)
 
 com0exe.win32.exe: $(SRCDEPS)
 	i686-w64-mingw32-gcc -mconsole -fno-pic -march=i686 -mtune=generic $(CFLAGS) -o $@ $<
+
+com0exe.com: $(SRCDEPS)  # For DOS.
+	owcc -bcom -s -Os -W -Wall -fno-stack-check -march=i86 -o $@ $<
+
+com0exe.dos.exe: $(SRCDEPS)  # For DOS. Just for testing. Use com0exe.com in production.
+	owcc -bdos -s -Os -W -Wall -fno-stack-check -march=i86 -o $@ $<
