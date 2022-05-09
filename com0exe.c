@@ -29,7 +29,7 @@
   extern ssize_t read(int __fd, void *__buf, size_t __nbytes) ;
   extern ssize_t write(int __fd, const void *__buf, size_t __n);
   extern int close(int __fd);
-  extern __off_t lseek(int __fd, __off_t __offset, int __whence) __attribute__((__nothrow__ , __leaf__));
+  extern off_t lseek(int __fd, off_t __offset, int __whence) __attribute__((__nothrow__ , __leaf__));
   #define strerror(errno) "I/O error"
   #define exit(x) _exit(x)
   #define NULL ((void*)0)
