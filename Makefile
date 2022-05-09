@@ -11,6 +11,9 @@ ALL = com0exe
 CFLAGS = -ansi -pedantic -s -O2 -W -Wall -Wextra -Werror=implicit-function-declaration -Werror=int-conversion $(XCFLAGS)
 XCFLAGS =  # To be overridden from the command-line.
 TCC = pts-tcc
+# Example test invocation: make test TEST_COM0EXE=./com0exe.tcc
+TEST_COM0EXE = ./com0exe
+TEST_COM0EXE_DEPS = $(TEST_COM0EXE)
 
 SRCDEPS = com0exe.c
 
@@ -46,9 +49,9 @@ com0exe.com: $(SRCDEPS)  # For DOS.
 com0exe.dos.exe: $(SRCDEPS)  # For DOS. Just for testing. Use com0exe.com in production.
 	owcc -bdos -s -Os -W -Wall -fno-stack-check -march=i86 $(XCFLAGS) -o $@ $< && rm -f com0exe.o
 
-test: com0exe
-	./com0exe         test/dumpre24.com test/tmp24.exe  && cmp test/dumpre24.exe test/tmp24.exe
-	./com0exe --      test/dumpre27.com test/tmp27.exe  && cmp test/dumpre27.exe test/tmp27.exe
-	./com0exe --noret test/dumprr.com   test/tmp32.exe  && cmp test/dumpre32.exe test/tmp32.exe
-	./com0exe         test/dumpregs.com test/tmp43.exe  && cmp test/dumpre43.exe test/tmp43.exe
-	./com0exe         test/long.com     test/tmpl43.exe && cmp test/long.exe     test/tmpl43.exe
+test: $(TEST_COM0EXE_DEPS)
+	$(TEST_COM0EXE)         test/dumpre24.com test/tmp24.exe  && cmp test/dumpre24.exe test/tmp24.exe
+	$(TEST_COM0EXE) --      test/dumpre27.com test/tmp27.exe  && cmp test/dumpre27.exe test/tmp27.exe
+	$(TEST_COM0EXE) --noret test/dumprr.com   test/tmp32.exe  && cmp test/dumpre32.exe test/tmp32.exe
+	$(TEST_COM0EXE)         test/dumpregs.com test/tmp43.exe  && cmp test/dumpre43.exe test/tmp43.exe
+	$(TEST_COM0EXE)         test/long.com     test/tmpl43.exe && cmp test/long.exe     test/tmpl43.exe
