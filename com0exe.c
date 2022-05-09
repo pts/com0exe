@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
   outfn = argv[0] ? *argv++ : NULL;
 
   { char *p = buf;
-    if ((infd = open(infn, O_RDONLY)) < 0) {
+    if ((infd = open(infn, O_RDONLY | O_BINARY)) < 0) {
       write_str3(STDERR_FILENO, "fatal: error opening input file: ", infn, ": ");
       write_str3(STDERR_FILENO, strerror(errno), "\n", "");
       exit(2);
@@ -290,7 +290,7 @@ int main(int argc, char **argv) {
   }
   { const char *p;
     uint16_t remaining;
-    if ((outfd = open(outfn, O_WRONLY | O_CREAT | O_TRUNC, 0644)) < 0) {
+    if ((outfd = open(outfn, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, 0644)) < 0) {
       write_str3(STDERR_FILENO, "fatal: error opening output file: ", outfn, ": ");
       write_str3(STDERR_FILENO, strerror(errno), "\n", "");
       exit(2);
