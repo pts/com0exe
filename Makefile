@@ -38,13 +38,13 @@ com0exe.win32.exe: $(SRCDEPS)
 	i686-w64-mingw32-gcc -mconsole -fno-pic -march=i686 -mtune=generic $(CFLAGS) -o $@ $<
 
 com0exe.win32w.exe: $(SRCDEPS)
-	owcc -bwin32 -Wl,runtime -Wl,console=3.10 -s -Os -W -Wall -fno-stack-check -march=i386 $(XCFLAGS) -o $@ $<
+	owcc -bwin32 -Wl,runtime -Wl,console=3.10 -s -Os -W -Wall -fno-stack-check -march=i386 $(XCFLAGS) -o $@ $< && rm -f com0exe.o
 
 com0exe.com: $(SRCDEPS)  # For DOS.
-	owcc -bcom -s -Os -W -Wall -fno-stack-check -march=i86 $(XCFLAGS) -o $@ $<
+	owcc -bcom -s -Os -W -Wall -fno-stack-check -march=i86 $(XCFLAGS) -o $@ $< && rm -f com0exe.o
 
 com0exe.dos.exe: $(SRCDEPS)  # For DOS. Just for testing. Use com0exe.com in production.
-	owcc -bdos -s -Os -W -Wall -fno-stack-check -march=i86 $(XCFLAGS) -o $@ $<
+	owcc -bdos -s -Os -W -Wall -fno-stack-check -march=i86 $(XCFLAGS) -o $@ $< && rm -f com0exe.o
 
 test: com0exe
 	./com0exe         test/dumpre24.com test/tmp24.exe  && cmp test/dumpre24.exe test/tmp24.exe
