@@ -7,12 +7,39 @@
  *   $ gcc -ansi -pedantic -s -O2 -W -Wall -Wextra -Werror=implicit-function-declaration -Werror=int-conversion  -o com0exe com0exe.c
  */
 
-#include <errno.h>
-#include <fcntl.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#if defined(__TINYC__) && defined(__linux__)
+  #define O_RDONLY 0
+  #define O_WRONLY 1
+  #define O_RDWR 2
+  #define O_CREAT 0100
+  #define O_TRUNC 01000
+  typedef unsigned long size_t;
+  typedef long ssize_t;
+  typedef unsigned short uint16_t;
+  extern size_t strlen(const char *__s)  __attribute__((__nothrow__ , __leaf__)) __attribute__((__pure__)) __attribute__((__nonnull__(1)));
+  extern void _exit(int __status) __attribute__((__noreturn__));
+  extern int strcmp(const char *__s1, const char *__s2) __attribute__((__nothrow__ , __leaf__)) __attribute__((__pure__)) __attribute__((__nonnull__(1, 2)));
+  extern int memcmp(const void *__s1, const void *__s2, size_t __n) __attribute__((__nothrow__ , __leaf__)) __attribute__((__pure__)) __attribute__((__nonnull__(1, 2)));
+  extern void *memcpy(void *__restrict __dest, const void *__restrict __src, size_t __n) __attribute__((__nothrow__ , __leaf__)) __attribute__((__nonnull__(1, 2)));
+  extern int open(const char *__file, int __oflag, ...) __attribute__((__nonnull__(1)));
+  extern ssize_t read(int __fd, void *__buf, size_t __nbytes) ;
+  extern ssize_t write(int __fd, const void *__buf, size_t __n);
+  extern int close(int __fd);
+  #define strerror(errno) "I/O error"
+  #define exit(x) _exit(x)
+  #define NULL ((void*)0)
+#else
+  #include <errno.h>
+  #include <fcntl.h>
+  #include <stdint.h>
+  #include <stdlib.h>
+  #include <string.h>
+  #include <unistd.h>
+#endif
+
+#ifdef __XSTATIC__
+  #define exit(x) _exit(x)
+#endif
 
 #undef IS_LE  /* If defined to be nonzero, then the architecture is little-endian. */
 #ifdef MSDOS
@@ -81,7 +108,7 @@ static void change_ext(char *fn, const char *ext) {
     write_str3(STDERR_FILENO, "fatal: extension too short in filename: ", fn, "\n");
     exit(2);
   }
-  strcpy(p, ext);
+  memcpy(p, ext, strlen(ext) + 1);
 }
 
 /* Same as in kvikdos. */
