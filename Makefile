@@ -1,4 +1,8 @@
-.PHONY: all clean run
+#
+# This Makefile is for Unix systems with GCC as C compiler. Tested on Linux.
+#
+
+.PHONY: all clean run test
 .SUFFIXES:
 MAKEFLAGS += -r
 
@@ -38,3 +42,10 @@ com0exe.com: $(SRCDEPS)  # For DOS.
 
 com0exe.dos.exe: $(SRCDEPS)  # For DOS. Just for testing. Use com0exe.com in production.
 	owcc -bdos -s -Os -W -Wall -fno-stack-check -march=i86 -o $@ $<
+
+test: com0exe
+	./com0exe         test/dumpre24.com test/tmp24.exe  && cmp test/dumpre24.exe test/tmp24.exe
+	./com0exe --      test/dumpre27.com test/tmp27.exe  && cmp test/dumpre27.exe test/tmp27.exe
+	./com0exe --noret test/dumprr.com   test/tmp32.exe  && cmp test/dumpre32.exe test/tmp32.exe
+	./com0exe         test/dumpregs.com test/tmp43.exe  && cmp test/dumpre43.exe test/tmp43.exe
+	./com0exe         test/long.com     test/tmpl43.exe && cmp test/long.exe     test/tmpl43.exe
