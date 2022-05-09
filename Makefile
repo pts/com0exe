@@ -2,7 +2,7 @@
 # This Makefile is for Unix systems with GCC as C compiler. Tested on Linux.
 #
 
-.PHONY: all clean run test
+.PHONY: all clean test
 .SUFFIXES:
 MAKEFLAGS += -r
 
@@ -17,15 +17,15 @@ SRCDEPS = com0exe.c
 all: $(ALL)
 
 clean:
-	rm -f $(ALL) com0exe32 com0exe64 com0exe.static
+	rm -f $(ALL) com0exe32 com0exe64 com0exe.static com0exe.32 com0exe.64 com0exe.static com0exe.tcc com0exe.win32.exe com0exe.com com0exe.dos.exe
 
 com0exe: $(SRCDEPS)
 	gcc $(CFLAGS) -o $@ $<
 
-com0exe32: $(SRCDEPS)
+com0exe.32: $(SRCDEPS)
 	gcc -m32 -fno-pic -march=i686 -mtune=generic $(CFLAGS) -o $@ $<
 
-com0exe64: $(SRCDEPS)
+com0exe.64: $(SRCDEPS)
 	gcc -m64 -march=k8 -mtune=generic $(CFLAGS) -o $@ $<
 
 com0exe.static: $(SRCDEPS)
