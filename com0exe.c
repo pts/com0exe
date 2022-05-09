@@ -235,7 +235,11 @@ int main(int argc, char **argv) {
       write_str3(STDERR_FILENO, "fatal: error reading input file: ", infn, ": ");
       goto error_errno;
     }
-    if (got == 16384) {  /* !! test with smaller. */
+    if (got >= 24 && ((buf[0] == 'M' && buf[1] == 'Z') || (buf[0] == 'Z' && buf[1] == 'M'))) {
+      write_str3(STDERR_FILENO, "fatal: input file is already an .exe: ", infn, "\n");
+      exit(2);
+    }
+    if (got == 16384) {
       long file_size;
       if ((file_size = lseek(infd, 0, SEEK_END)) < 0) { seek_error:
         write_str3(STDERR_FILENO, "fatal: error seeking input file: ", infn, ": ");
