@@ -4,7 +4,7 @@
  *
  * Compile as:
  *
- *   $ gcc -ansi -pedantic -s -O2 -W -Wall -Wextra -Werror=implicit-function-declaration -Werror=int-conversion  -o com0exe com0exe.c
+ *   $ gcc -ansi -pedantic -s -O2 -W -Wall -Wextra -Werror=implicit-function-declaration -Werror=int-conversion -o com0exe com0exe.c
  */
 
 #if defined(__TINYC__) && defined(__linux__)
@@ -52,10 +52,27 @@
 #define SEP2 '\\'
 #define strerror(errno) "I/O error"
 #else
-#ifdef WIN32
+#ifdef _WIN32
 #define IS_LE 1
 #define SEP2 '\\'
 #define strerror(errno) "I/O error"
+#ifdef __WATCOMC__
+/* This functionality was copied from nouser32.c.
+ * Overrides lib386/nt/clib3r.lib / mbcupper.o
+ * Source: https://github.com/open-watcom/open-watcom-v2/blob/master/bld/clib/mbyte/c/mbcupper.c
+ * Overridden implementation calls CharUpperA in USER32.DLL:
+ * https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-charuppera
+ *
+ * This function is a transitive dependency of _cstart() with main() in
+ * OpenWatcom. By overridding it, we remove the transitive dependency of all
+ * .exe files compiled with `owcc -bwin32' on USER32.DLL.
+ *
+ * This is a simplified implementation, it keeps non-ASCII characters intact.
+ */
+unsigned int _mbctoupper(unsigned int c) {
+  return (c - 'a' + 0U <= 'z' - 'a' + 0U)  ? c + 'A' - 'a' : c;
+}
+#endif
 #else
 #define SEP2 '/'
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__

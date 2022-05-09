@@ -17,7 +17,7 @@ SRCDEPS = com0exe.c
 all: $(ALL)
 
 clean:
-	rm -f $(ALL) com0exe32 com0exe64 com0exe.static com0exe.32 com0exe.64 com0exe.static com0exe.tcc com0exe.win32.exe com0exe.com com0exe.dos.exe
+	rm -f $(ALL) com0exe32 com0exe64 com0exe.static com0exe.32 com0exe.64 com0exe.static com0exe.tcc com0exe.win32.exe com0exe.win32w.exe com0exe.com com0exe.dos.exe
 
 com0exe: $(SRCDEPS)
 	gcc $(CFLAGS) -o $@ $<
@@ -37,11 +37,14 @@ com0exe.tcc: $(SRCDEPS)
 com0exe.win32.exe: $(SRCDEPS)
 	i686-w64-mingw32-gcc -mconsole -fno-pic -march=i686 -mtune=generic $(CFLAGS) -o $@ $<
 
+com0exe.win32w.exe: $(SRCDEPS)
+	owcc -bwin32 -Wl,runtime -Wl,console=3.10 -s -Os -W -Wall -fno-stack-check -march=i386 $(XCFLAGS) -o $@ $<
+
 com0exe.com: $(SRCDEPS)  # For DOS.
-	owcc -bcom -s -Os -W -Wall -fno-stack-check -march=i86 -o $@ $<
+	owcc -bcom -s -Os -W -Wall -fno-stack-check -march=i86 $(XCFLAGS) -o $@ $<
 
 com0exe.dos.exe: $(SRCDEPS)  # For DOS. Just for testing. Use com0exe.com in production.
-	owcc -bdos -s -Os -W -Wall -fno-stack-check -march=i86 -o $@ $<
+	owcc -bdos -s -Os -W -Wall -fno-stack-check -march=i86 $(XCFLAGS) -o $@ $<
 
 test: com0exe
 	./com0exe         test/dumpre24.com test/tmp24.exe  && cmp test/dumpre24.exe test/tmp24.exe
