@@ -272,6 +272,10 @@ int main(int argc, char **argv) {
     write_str3(STDERR_FILENO, "fatal: .exe program entry point would be to high: ", infn, "\n");
     exit(2);
   }
+  if (exehdr_size + com_size_with_trailer > MAX_DOS_COM_SIZE + variant) {  /* This should never happen, we've checked everything above. */
+    write_str3(STDERR_FILENO, "fatal: .exe program would be too long: ", infn, "\n");
+    exit(2);
+  }
 
   { uint16_t *eh = exehdr;
     const uint16_t exehdr_para = variant >> 4;  /* = (variant >= 32) ? 2 : 1; */
@@ -279,20 +283,18 @@ int main(int argc, char **argv) {
     const uint16_t imagex_size_lastsize = imagex_size & 0x1ff;
     const uint16_t imagex_size_nblocks = (imagex_size >> 9) + (imagex_size_lastsize ? 1 : 0);  /* No uint16_t overflow. */
     const uint16_t imagea_para = (imagex_size_nblocks << 5) - exehdr_para;
-    if ((exehdr_size & ~15) + com_size_with_trailer > MAX_DOS_COM_SIZE) {
-      write_str3(STDERR_FILENO, "fatal: .exe program would be too long: ", infn, "\n");
-      exit(2);
-    }
-    if (imagea_para > 0xff0) {
-      write_str3(STDERR_FILENO, "fatal: .exe program would be too long (para alloc count): ", infn, "\n");
-      exit(2);
-    }
+    /* By doing a minimum operation here we make the memory requirements of
+     * large (close to 64 KiB) .exe files up to 496 bytes larger than
+     * necessary. Otherwise we wouldn't be able to load such a long code due
+     * to rounding to 512-byte boundary.
+     */
+    const uint16_t imagea_minalloc = (imagea_para >= 0xff0) ? 0 : 0xff0 - imagea_para;
     *eh++ /* [EXE_SIGNATURE] */ = 'M' | 'Z' << 8;
     *eh++ /* [EXE_LASTSIZE] */ = imagex_size_lastsize;
     *eh++ /* [EXE_NBLOCKS] */ = imagex_size_nblocks;
     *eh++ /* [EXE_NRELOC] */ = 0;
     *eh++ /* [EXE_HDRSIZE] */ = exehdr_para;
-    *eh++ /* [EXE_MINALLOC] */ = 0xff0 - imagea_para;
+    *eh++ /* [EXE_MINALLOC] */ = imagea_minalloc;
     *eh++ /* [EXE_MAXALLOC] */ = 0xffff;
     *eh++ /* [EXE_SS] */ = 0xfff0;
     *eh++ /* [EXE_SP] */ = (variant == 32) ? 0xfffe : 0;
