@@ -29,8 +29,10 @@ are: 24, 27, 32 and 43. A comparison table:
   `org 0x100'                  YES     YES     YES     YES
   `int 0x20' exits             YES     YES     YES     YES
   `ret' exits                  no      YES     no      YES
-  DI == SP == 0xfffe           no      no      YES     YES
-  DI == SP == 0                YES     YES     no      no
+  DI == 0xfffe                 no      no      no      YES
+  DI == 0                      no      yes     no      no
+  SP == 0xfffe                 no      YES     YES     YES
+  SP == 0                      yes     no      no      no
   SI                           0x108   0x108   0x100   0x100
   user code starts at CS:...   0x108   0x10b   0x100   0x100
   ZF (flag)                    old     0       old     old
